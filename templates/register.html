@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+
+{% block title %}Register{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <i class="fas fa-user-plus"></i>
+            <h2>Create Account</h2>
+            <p>Join us to track your eye health</p>
+        </div>
+        
+        <form method="POST" action="{{ url_for('register') }}" class="auth-form" id="registerForm">
+            <div class="form-group">
+                <label for="username">
+                    <i class="fas fa-user"></i> Username
+                </label>
+                <input type="text" id="username" name="username" required 
+                       placeholder="Choose a username" minlength="3">
+                <small class="form-error" id="usernameError"></small>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">
+                    <i class="fas fa-envelope"></i> Email Address
+                </label>
+                <input type="email" id="email" name="email" required 
+                       placeholder="your@email.com">
+                <small class="form-error" id="emailError"></small>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">
+                    <i class="fas fa-lock"></i> Password
+                </label>
+                <input type="password" id="password" name="password" required 
+                       placeholder="Create a password" minlength="6">
+                <button type="button" class="toggle-password" onclick="togglePassword('password')">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <small class="form-hint">Password must be at least 6 characters</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="confirm_password">
+                    <i class="fas fa-check-circle"></i> Confirm Password
+                </label>
+                <input type="password" id="confirm_password" name="confirm_password" required 
+                       placeholder="Confirm your password">
+                <button type="button" class="toggle-password" onclick="togglePassword('confirm_password')">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <small class="form-error" id="confirmError"></small>
+            </div>
+            
+            <div class="form-options">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="terms" required> 
+                    I agree to the <a href="#" target="_blank">Terms of Service</a> and 
+                    <a href="#" target="_blank">Privacy Policy</a>
+                </label>
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-block" id="registerBtn">
+                <i class="fas fa-user-plus"></i> Create Account
+            </button>
+        </form>
+        
+        <div class="auth-footer">
+            <p>Already have an account? <a href="{{ url_for('login') }}">Login here</a></p>
+        </div>
+    </div>
+</div>
+
+<style>
+.auth-container {
+    min-height: calc(100vh - 200px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.auth-card {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+}
+
+.auth-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.auth-header i {
+    font-size: 60px;
+    color: #667eea;
+    margin-bottom: 15px;
+}
+
+.auth-header h2 {
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.auth-header p {
+    color: #666;
+    font-size: 14px;
+}
+
+.auth-form .form-group {
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.auth-form label {
+    display: block;
+    margin-bottom: 8px;
+    color: #333;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.auth-form label i {
+    margin-right: 8px;
+    color: #667eea;
+}
+
+.auth-form input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+.auth-form input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.auth-form input.error {
+    border-color: #dc3545;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 15px;
+    bottom: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #999;
+}
+
+.form-error {
+    color: #dc3545;
+    font-size: 11px;
+    display: block;
+    margin-top: 5px;
+}
+
+.form-hint {
+    color: #999;
+    font-size: 11px;
+    display: block;
+    margin-top: 5px;
+}
+
+.form-options {
+    margin-bottom: 25px;
+    font-size: 13px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    color: #666;
+}
+
+.checkbox-label a {
+    color: #667eea;
+    text-decoration: none;
+}
+
+.btn-block {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+}
+
+.auth-footer {
+    text-align: center;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+    color: #666;
+    font-size: 14px;
+}
+
+.auth-footer a {
+    color: #667eea;
+    text-decoration: none;
+}
+</style>
+
+<script>
+function togglePassword(fieldId) {
+    const passwordInput = document.getElementById(fieldId);
+    const toggleIcon = passwordInput.parentElement.querySelector('.toggle-password i');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleIcon.classList.remove('fa-eye');
+        toggleIcon.classList.add('fa-eye-slash');
+    } else {
+        passwordInput.type = 'password';
+        toggleIcon.classList.remove('fa-eye-slash');
+        toggleIcon.classList.add('fa-eye');
+    }
+}
+
+document.getElementById('registerForm').addEventListener('submit', function(e) {
+    let isValid = true;
+    
+    // Username validation
+    const username = document.getElementById('username');
+    if (username.value.length < 3) {
+        document.getElementById('usernameError').textContent = 'Username must be at least 3 characters';
+        username.classList.add('error');
+        isValid = false;
+    } else {
+        document.getElementById('usernameError').textContent = '';
+        username.classList.remove('error');
+    }
+    
+    // Email validation
+    const email = document.getElementById('email');
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.value)) {
+        document.getElementById('emailError').textContent = 'Please enter a valid email address';
+        email.classList.add('error');
+        isValid = false;
+    } else {
+        document.getElementById('emailError').textContent = '';
+        email.classList.remove('error');
+    }
+    
+    // Password confirmation
+    const password = document.getElementById('password');
+    const confirm = document.getElementById('confirm_password');
+    if (password.value !== confirm.value) {
+        document.getElementById('confirmError').textContent = 'Passwords do not match';
+        confirm.classList.add('error');
+        isValid = false;
+    } else {
+        document.getElementById('confirmError').textContent = '';
+        confirm.classList.remove('error');
+    }
+    
+    // Terms checkbox
+    const terms = document.getElementById('terms');
+    if (!terms.checked) {
+        alert('Please agree to the Terms of Service and Privacy Policy');
+        isValid = false;
+    }
+    
+    if (!isValid) {
+        e.preventDefault();
+    }
+});
+</script>
+{% endblock %}

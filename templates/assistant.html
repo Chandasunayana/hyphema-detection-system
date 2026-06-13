@@ -1,0 +1,566 @@
+{% extends "base.html" %}
+
+{% block title %}AI Assistant{% endblock %}
+
+{% block content %}
+<div class="assistant-container">
+    <h1 class="page-title">
+        <i class="fas fa-robot"></i> AI Medical Assistant
+    </h1>
+    
+    <div class="assistant-grid">
+        <!-- Chat Section -->
+        <div class="chat-section">
+            <div class="chat-header">
+                <i class="fas fa-brain"></i>
+                <span>Hyphema Assistant</span>
+                <span class="online-badge">
+                    <i class="fas fa-circle"></i> Online
+                </span>
+            </div>
+            
+            <div class="chat-messages" id="chatMessages">
+                <div class="message bot">
+                    <div class="message-avatar">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="message-content">
+                        <div class="message-text">
+                            Hello! I'm your AI assistant for hyphema-related questions.
+                            <br><br>
+                            <strong>You can ask me about:</strong>
+                            <ul>
+                                <li>What is hyphema?</li>
+                                <li>Symptoms of hyphema</li>
+                                <li>Treatment options</li>
+                                <li>Emergency signs</li>
+                                <li>Precautions to take</li>
+                                <li>When to see a doctor</li>
+                            </ul>
+                            How can I help you today?
+                        </div>
+                        <div class="message-time">Just now</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chat-input-area">
+                <div class="input-wrapper">
+                    <input type="text" id="chatInput" placeholder="Type your question here..." class="chat-input">
+                    <button id="sendBtn" class="send-btn">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                <div class="suggestion-chips">
+                    <button class="chip" data-question="What is hyphema?">Hyphema</button>
+                    <button class="chip" data-question="Symptoms of hyphema">Symptoms</button>
+                    <button class="chip" data-question="Treatment for hyphema">Treatment</button>
+                    <button class="chip" data-question="Emergency signs">Emergency</button>
+                    <button class="chip" data-question="Precautions for eye">Precautions</button>
+
+                    <button class="chip" data-question="Why do I have eye pain?">Eye Pain</button>
+                    <button class="chip" data-question="Why is my eye red?">Red Eye</button>
+                    <button class="chip" data-question="Why is my vision blurry?">Blur Vision</button>
+                    <button class="chip" data-question="What causes dry eyes?">Dry Eyes</button>
+                    <button class="chip" data-question="What is glaucoma?">Glaucoma</button>
+                    <button class="chip" data-question="What is cataract?">Cataract</button>
+                    <button class="chip" data-question="Eye strain solution">Eye Strain</button>
+                    <button class="chip" data-question="Eye infection symptoms">Eye Infection</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Info Section -->
+        <div class="info-section">
+            <div class="info-card">
+                <h3><i class="fas fa-question-circle"></i> Common Questions</h3>
+                <div class="faq-list">
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <i class="fas fa-chevron-right"></i>
+                            Can hyphema heal on its own?
+                        </div>
+                        <div class="faq-answer">
+                            Mild hyphemas may resolve in 5-10 days with proper rest and medical supervision, but medical attention is essential to monitor eye pressure.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <i class="fas fa-chevron-right"></i>
+                            How long does recovery take?
+                        </div>
+                        <div class="faq-answer">
+                            Recovery time varies by severity: mild (5-7 days), moderate (1-2 weeks), severe (2-4 weeks or longer with treatment).
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <i class="fas fa-chevron-right"></i>
+                            Can I exercise with hyphema?
+                        </div>
+                        <div class="faq-answer">
+                            No. Avoid any strenuous activity, heavy lifting, or bending over as these can increase eye pressure and cause re-bleeding.
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <i class="fas fa-chevron-right"></i>
+                            When can I return to work/school?
+                        </div>
+                        <div class="faq-answer">
+                            Only after your ophthalmologist approves. This depends on severity and resolution of bleeding.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="emergency-card">
+                <i class="fas fa-ambulance"></i>
+                <h4>Emergency Situations</h4>
+                <p>Seek immediate medical help if you experience:</p>
+                <ul>
+                    <li>Sudden vision loss</li>
+                    <li>Severe eye pain</li>
+                    <li>Large amount of blood in eye</li>
+                    <li>Nausea or vomiting with eye pain</li>
+                    <li>Flashes of light or floaters</li>
+                </ul>
+                <a href="{{ url_for('hospitals') }}" class="btn btn-danger btn-sm">
+                    <i class="fas fa-hospital"></i> Find Emergency Care
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.assistant-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.page-title {
+    font-size: 32px;
+    color: #333;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.assistant-grid {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 30px;
+}
+
+.chat-section {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 600px;
+}
+
+.chat-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.chat-header i {
+    font-size: 24px;
+}
+
+.chat-header span:first-of-type {
+    font-weight: bold;
+    flex: 1;
+}
+
+.online-badge {
+    font-size: 12px;
+    background: rgba(255,255,255,0.2);
+    padding: 5px 10px;
+    border-radius: 20px;
+}
+
+.online-badge i {
+    font-size: 10px;
+    color: #4ade80;
+}
+
+.chat-messages {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background: #f8f9fa;
+}
+
+.message {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.message.user {
+    flex-direction: row-reverse;
+}
+
+.message-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    flex-shrink: 0;
+}
+
+.message.user .message-avatar {
+    background: #28a745;
+}
+
+.message-content {
+    max-width: 70%;
+}
+
+.message.user .message-content {
+    text-align: right;
+}
+
+.message-text {
+    background: white;
+    padding: 12px 16px;
+    border-radius: 18px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    line-height: 1.5;
+}
+
+.message.user .message-text {
+    background: #667eea;
+    color: white;
+}
+
+.message-text ul {
+    margin: 8px 0 0 20px;
+}
+
+.message-time {
+    font-size: 11px;
+    color: #999;
+    margin-top: 5px;
+}
+
+.chat-input-area {
+    padding: 20px;
+    border-top: 1px solid #eee;
+    background: white;
+}
+
+.input-wrapper {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.chat-input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 1px solid #ddd;
+    border-radius: 25px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.chat-input:focus {
+    border-color: #667eea;
+}
+
+.send-btn {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.send-btn:hover {
+    transform: scale(1.05);
+}
+
+.suggestion-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.chip {
+    padding: 6px 14px;
+    background: #f0f0f0;
+    border: none;
+    border-radius: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.chip:hover {
+    background: #667eea;
+    color: white;
+}
+
+.info-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.info-card {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.info-card h3 {
+    margin-bottom: 15px;
+    color: #333;
+    font-size: 18px;
+}
+
+.faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.faq-item {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 12px;
+}
+
+.faq-question {
+    font-weight: 600;
+    color: #333;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.faq-question i {
+    font-size: 12px;
+    color: #667eea;
+}
+
+.faq-answer {
+    font-size: 13px;
+    color: #666;
+    margin-top: 8px;
+    padding-left: 20px;
+    display: none;
+}
+
+.faq-item.active .faq-answer {
+    display: block;
+}
+
+.emergency-card {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 20px;
+    text-align: center;
+}
+
+.emergency-card i {
+    font-size: 40px;
+    margin-bottom: 10px;
+}
+
+.emergency-card h4 {
+    margin-bottom: 10px;
+}
+
+.emergency-card ul {
+    text-align: left;
+    margin: 15px 0;
+    padding-left: 20px;
+}
+
+.emergency-card li {
+    margin-bottom: 5px;
+}
+
+.btn-danger {
+    background: white;
+    color: #dc3545;
+}
+
+.btn-danger:hover {
+    background: #f8f9fa;
+}
+
+.btn-sm {
+    padding: 8px 16px;
+    font-size: 14px;
+}
+
+.typing-indicator {
+    display: flex;
+    gap: 4px;
+    padding: 12px 16px;
+    background: white;
+    border-radius: 18px;
+    width: fit-content;
+}
+
+.typing-indicator span {
+    width: 8px;
+    height: 8px;
+    background: #999;
+    border-radius: 50%;
+    animation: typing 1.4s infinite;
+}
+
+.typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+.typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typing {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-10px); }
+}
+
+@media (max-width: 768px) {
+    .assistant-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const chatMessages = document.getElementById('chatMessages');
+    const chatInput = document.getElementById('chatInput');
+    const sendBtn = document.getElementById('sendBtn');
+    
+    // FAQ toggle
+    document.querySelectorAll('.faq-question').forEach(question => {
+        question.addEventListener('click', function() {
+            this.parentElement.classList.toggle('active');
+        });
+    });
+    
+    // Send message function
+    function sendMessage() {
+        const question = chatInput.value.trim();
+        if (!question) return;
+        
+        // Add user message
+        addMessage(question, 'user');
+        chatInput.value = '';
+        
+        // Show typing indicator
+        const typingId = showTypingIndicator();
+        
+        // Send to server
+        fetch('/api/assistant/ask', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ question: question })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Remove typing indicator
+            removeTypingIndicator(typingId);
+            // Add bot response
+            addMessage(data.answer, 'bot');
+        })
+        .catch(error => {
+            removeTypingIndicator(typingId);
+            addMessage('Sorry, I encountered an error. Please try again.', 'bot');
+        });
+    }
+    
+    function addMessage(text, sender) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${sender}`;
+        
+        const avatar = document.createElement('div');
+        avatar.className = 'message-avatar';
+        avatar.innerHTML = sender === 'bot' ? '<i class="fas fa-robot"></i>' : '<i class="fas fa-user"></i>';
+        
+        const content = document.createElement('div');
+        content.className = 'message-content';
+        
+        const textDiv = document.createElement('div');
+        textDiv.className = 'message-text';
+        textDiv.innerHTML = text.replace(/\n/g, '<br>');
+        
+        const time = document.createElement('div');
+        time.className = 'message-time';
+        time.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        content.appendChild(textDiv);
+        content.appendChild(time);
+        messageDiv.appendChild(avatar);
+        messageDiv.appendChild(content);
+        
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    function showTypingIndicator() {
+        const id = 'typing-' + Date.now();
+        const typingDiv = document.createElement('div');
+        typingDiv.id = id;
+        typingDiv.className = 'message bot';
+        typingDiv.innerHTML = `
+            <div class="message-avatar"><i class="fas fa-robot"></i></div>
+            <div class="message-content">
+                <div class="typing-indicator">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
+        `;
+        chatMessages.appendChild(typingDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        return id;
+    }
+    
+    function removeTypingIndicator(id) {
+        const element = document.getElementById(id);
+        if (element) element.remove();
+    }
+    
+    // Event listeners
+    sendBtn.addEventListener('click', sendMessage);
+    chatInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') sendMessage();
+    });
+    
+    // Suggestion chips
+    document.querySelectorAll('.chip').forEach(chip => {
+        chip.addEventListener('click', function() {
+            chatInput.value = this.dataset.question;
+            sendMessage();
+        });
+    });
+});
+</script>
+{% endblock %}

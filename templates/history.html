@@ -1,0 +1,394 @@
+{% extends "base.html" %}
+
+{% block title %}Report History{% endblock %}
+
+{% block content %}
+<div class="history-container">
+    <h1 class="page-title">
+        <i class="fas fa-history"></i> My Reports
+    </h1>
+    
+    {% if reports %}
+        <div class="stats-cards">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-number">{{ reports|length }}</span>
+                    <span class="stat-label">Total Reports</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-number">{{ reports|selectattr('prediction', 'equalto', 'Hyphema Detected')|list|length }}</span>
+                    <span class="stat-label">Hyphema Cases</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-number">{{ reports|selectattr('prediction', 'equalto', 'Normal Eye')|list|length }}</span>
+                    <span class="stat-label">Normal Results</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="reports-table-wrapper">
+            <table class="reports-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Prediction</th>
+                        <th>Confidence</th>
+                        <th>Severity</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for report in reports %}
+                    <tr>
+                        <td>{{ report.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>
+                            <span class="prediction-badge {% if report.prediction == 'Hyphema Detected' %}badge-danger{% else %}badge-success{% endif %}">
+                                {{ report.prediction }}
+                            </span>
+                        </td>
+                        <td>{{ "%.1f"|format(report.confidence * 100) }}%</td>
+                        <td>
+                            <span class="severity-badge severity-{{ report.severity_grade }}">
+                                Grade {{ report.severity_grade }}: {{ report.severity_label }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <a href="{{ url_for('download_report', report_id=report.id) }}" class="btn-icon" title="Download PDF">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                                <button class="btn-icon view-details" data-report-id="{{ report.id }}" title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-folder-open"></i>
+            <h3>No Reports Found</h3>
+            <p>You haven't uploaded any eye images for analysis yet.</p>
+            <a href="{{ url_for('capture') }}" class="btn btn-primary">
+                <i class="fas fa-camera"></i> Scan Your First Eye
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Modal for Report Details -->
+<div id="reportModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-file-medical"></i> Report Details</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body" id="modalBody">
+            <!-- Dynamic content -->
+        </div>
+    </div>
+</div>
+
+<style>
+.history-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.page-title {
+    font-size: 32px;
+    color: #333;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.stats-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+}
+
+.stat-info {
+    flex: 1;
+}
+
+.stat-number {
+    display: block;
+    font-size: 28px;
+    font-weight: bold;
+    color: #333;
+}
+
+.stat-label {
+    font-size: 14px;
+    color: #666;
+}
+
+.reports-table-wrapper {
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.reports-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.reports-table thead {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.reports-table th,
+.reports-table td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.reports-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.prediction-badge {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.badge-success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.badge-danger {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.severity-badge {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.severity-0 { background: #d4edda; color: #155724; }
+.severity-1 { background: #fff3cd; color: #856404; }
+.severity-2 { background: #ffe5b4; color: #cc7a00; }
+.severity-3 { background: #f8d7da; color: #721c24; }
+.severity-4 { background: #dc3545; color: white; }
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: none;
+    background: #f0f0f0;
+    color: #666;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.btn-icon:hover {
+    background: #667eea;
+    color: white;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.empty-state i {
+    font-size: 80px;
+    color: #ccc;
+    margin-bottom: 20px;
+}
+
+.empty-state h3 {
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.empty-state p {
+    color: #666;
+    margin-bottom: 20px;
+}
+
+/* Modal Styles */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 20px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #333;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    color: #999;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+@media (max-width: 768px) {
+    .stats-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .reports-table {
+        font-size: 12px;
+    }
+    
+    .reports-table th,
+    .reports-table td {
+        padding: 10px;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('reportModal');
+    const modalBody = document.getElementById('modalBody');
+    const modalClose = document.querySelector('.modal-close');
+    
+    // Sample report data for modal (in production, fetch from server)
+    const reportDetails = {
+        {% for report in reports %}
+        {{ report.id }}: {
+            prediction: '{{ report.prediction }}',
+            confidence: '{{ "%.1f"|format(report.confidence * 100) }}%',
+            severity: '{{ report.severity_label }}',
+            severityGrade: {{ report.severity_grade }},
+            recommendation: '{{ report.recommendation|safe }}',
+            date: '{{ report.created_at.strftime("%Y-%m-%d %H:%M") }}'
+        },
+        {% endfor %}
+    };
+    
+    document.querySelectorAll('.view-details').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const reportId = this.dataset.reportId;
+            const details = reportDetails[reportId];
+            
+            if (details) {
+                modalBody.innerHTML = `
+                    <div class="report-detail">
+                        <p><strong>Date:</strong> ${details.date}</p>
+                        <p><strong>Prediction:</strong> ${details.prediction}</p>
+                        <p><strong>Confidence:</strong> ${details.confidence}</p>
+                        <p><strong>Severity:</strong> Grade ${details.severityGrade} - ${details.severity}</p>
+                        <hr>
+                        <h4>Recommendations</h4>
+                        <p>${details.recommendation || 'No recommendations available'}</p>
+                        <div class="disclaimer">
+                            <i class="fas fa-info-circle"></i>
+                            This is an AI-generated report. Please consult an ophthalmologist for medical advice.
+                        </div>
+                    </div>
+                `;
+                modal.style.display = 'flex';
+            }
+        });
+    });
+    
+    modalClose.addEventListener('click', function() {
+        modal.style.display = 'none';
+    });
+    
+    window.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+});
+</script>
+{% endblock %}

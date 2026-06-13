@@ -1,0 +1,720 @@
+{% extends "base.html" %}
+
+{% block title %}Nearby Hospitals{% endblock %}
+
+{% block content %}
+<div class="hospitals-container">
+    <h1 class="page-title">
+        <i class="fas fa-hospital-user"></i> Nearby Eye Hospitals
+    </h1>
+    
+    <div class="hospitals-layout">
+        <!-- Left Side - Hospital List -->
+        <div class="hospitals-list-section">
+            <div class="search-filter-bar">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Search by hospital name or specialty...">
+                </div>
+                
+                <div class="filter-group">
+                    <button class="filter-btn active" data-filter="all">
+                        <i class="fas fa-building"></i> All
+                    </button>
+                    <button class="filter-btn" data-filter="emergency">
+                        <i class="fas fa-ambulance"></i> Emergency 24/7
+                    </button>
+                    <button class="filter-btn" data-filter="ophthalmology">
+                        <i class="fas fa-eye"></i> Ophthalmology
+                    </button>
+                </div>
+            </div>
+            
+            <div class="hospitals-list" id="hospitalsList">
+                {% for hospital in hospitals %}
+                <div class="hospital-item" 
+                     data-emergency="{{ hospital.emergency|lower }}"
+                     data-specialty="{{ hospital.specialty|lower }}"
+                     data-name="{{ hospital.name|lower }}"
+                     data-lat="{{ hospital.lat }}"
+                     data-lon="{{ hospital.lon }}">
+                    
+                    <div class="hospital-status">
+                        {% if hospital.emergency %}
+                        <span class="emergency-badge">
+                            <i class="fas fa-bell"></i> 24/7 Emergency
+                        </span>
+                        {% endif %}
+                        <div class="hospital-rating">
+                            <i class="fas fa-star"></i> {{ hospital.rating }}
+                        </div>
+                    </div>
+                    
+                    <h3 class="hospital-name">
+                        <i class="fas fa-building"></i> {{ hospital.name }}
+                    </h3>
+                    
+                    <div class="hospital-info">
+                        <p><i class="fas fa-map-marker-alt"></i> {{ hospital.address }}</p>
+                        <p><i class="fas fa-phone-alt"></i> <a href="tel:{{ hospital.phone }}">{{ hospital.phone }}</a></p>
+                        <p><i class="fas fa-stethoscope"></i> {{ hospital.specialty }}</p>
+                        <p><i class="fas fa-clock"></i> {{ hospital.timing }}</p>
+                        <p><i class="fas fa-road"></i> <strong>Distance:</strong> {{ hospital.distance_text }}</p>
+                    </div>
+                    
+                    <div class="hospital-actions">
+                        <button class="btn-directions" data-lat="{{ hospital.lat }}" data-lon="{{ hospital.lon }}">
+                            <i class="fas fa-directions"></i> Directions
+                        </button>
+                        <a href="tel:{{ hospital.phone }}" class="btn-call">
+                            <i class="fas fa-phone"></i> Call
+                        </a>
+                        <button class="btn-book" data-name="{{ hospital.name }}" data-phone="{{ hospital.phone }}">
+                            <i class="fas fa-calendar-check"></i> Book
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Right Side - Map -->
+        <div class="map-section">
+            <div id="map" class="map-container"></div>
+            <div class="map-controls">
+                <button id="myLocationBtn" class="location-btn">
+                    <i class="fas fa-location-dot"></i> My Location
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Emergency Tips -->
+    <div class="emergency-tips-grid">
+        <div class="tip-card">
+            <div class="tip-icon"><i class="fas fa-ambulance"></i></div>
+            <h4>Emergency Signs</h4>
+            <p>Sudden vision loss, severe eye pain, large amount of blood in eye</p>
+        </div>
+        <div class="tip-card">
+            <div class="tip-icon"><i class="fas fa-file-medical"></i></div>
+            <h4>What to Bring</h4>
+            <p>ID card, insurance info, list of medications, previous eye reports</p>
+        </div>
+        <div class="tip-card">
+            <div class="tip-icon"><i class="fas fa-car"></i></div>
+            <h4>Don't Drive</h4>
+            <p>If you have vision problems or severe pain, ask someone else to drive</p>
+        </div>
+    </div>
+</div>
+
+<style>
+.hospitals-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.page-title {
+    font-size: 28px;
+    color: #333;
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.hospitals-layout {
+    display: grid;
+    grid-template-columns: 1fr 450px;
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
+/* Left Section */
+.hospitals-list-section {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.search-filter-bar {
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+    background: #fafafa;
+}
+
+.search-box {
+    display: flex;
+    align-items: center;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 50px;
+    padding: 10px 18px;
+    margin-bottom: 15px;
+}
+
+.search-box i {
+    color: #999;
+    margin-right: 10px;
+}
+
+.search-box input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 14px;
+}
+
+.filter-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    padding: 8px 18px;
+    border: 1px solid #ddd;
+    background: white;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.filter-btn:hover {
+    border-color: #667eea;
+    color: #667eea;
+}
+
+.filter-btn.active {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border-color: transparent;
+}
+
+.hospitals-list {
+    max-height: 550px;
+    overflow-y: auto;
+    padding: 15px;
+}
+
+.hospital-item {
+    background: #f8f9fa;
+    border-radius: 15px;
+    padding: 18px;
+    margin-bottom: 15px;
+    transition: all 0.3s;
+    border: 1px solid #eee;
+}
+
+.hospital-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    border-color: #667eea;
+}
+
+.hospital-status {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.emergency-badge {
+    background: #dc3545;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.hospital-rating {
+    color: #ffc107;
+    font-weight: bold;
+}
+
+.hospital-name {
+    font-size: 18px;
+    margin-bottom: 12px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.hospital-info p {
+    margin: 8px 0;
+    font-size: 13px;
+    color: #555;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.hospital-info i {
+    width: 20px;
+    color: #667eea;
+}
+
+.hospital-info a {
+    color: #555;
+    text-decoration: none;
+}
+
+.hospital-info a:hover {
+    color: #667eea;
+}
+
+.hospital-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.btn-directions, .btn-call, .btn-book {
+    padding: 8px 16px;
+    border-radius: 25px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: none;
+}
+
+.btn-directions {
+    background: #667eea;
+    color: white;
+}
+
+.btn-directions:hover {
+    background: #5a67d8;
+    transform: scale(1.02);
+}
+
+.btn-call {
+    background: #28a745;
+    color: white;
+}
+
+.btn-call:hover {
+    background: #218838;
+}
+
+.btn-book {
+    background: #ffc107;
+    color: #333;
+}
+
+.btn-book:hover {
+    background: #e0a800;
+}
+
+/* Map Section */
+.map-section {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    overflow: hidden;
+    position: relative;
+    height: 600px;
+}
+
+.map-container {
+    width: 100%;
+    height: 100%;
+}
+
+.map-controls {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    z-index: 10;
+}
+
+.location-btn {
+    background: white;
+    border: none;
+    padding: 12px 18px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.location-btn:hover {
+    background: #667eea;
+    color: white;
+}
+
+/* Emergency Tips */
+.emergency-tips-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.tip-card {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    transition: transform 0.3s;
+}
+
+.tip-card:hover {
+    transform: translateY(-3px);
+}
+
+.tip-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 15px;
+    color: white;
+    font-size: 20px;
+}
+
+.tip-card h4 {
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.tip-card p {
+    font-size: 13px;
+    color: #666;
+    line-height: 1.5;
+}
+
+/* No Results */
+.no-results {
+    text-align: center;
+    padding: 40px;
+    color: #999;
+}
+
+/* Scrollbar */
+.hospitals-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.hospitals-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.hospitals-list::-webkit-scrollbar-thumb {
+    background: #667eea;
+    border-radius: 10px;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .hospitals-layout {
+        grid-template-columns: 1fr;
+    }
+    
+    .map-section {
+        height: 400px;
+    }
+    
+    .emergency-tips-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 500px) {
+    .hospital-actions {
+        flex-wrap: wrap;
+    }
+    
+    .filter-group {
+        flex-direction: column;
+    }
+    
+    .filter-btn {
+        justify-content: center;
+    }
+}
+</style>
+
+<script>
+// Hospital data from backend
+const hospitals = {{ hospitals|tojson }};
+
+let map;
+let markers = [];
+let userMarker;
+
+// Initialize map (fallback if no API key)
+function initMap() {
+    const defaultCenter = { lat: 17.3850, lng: 78.4867 };
+    
+    // Check if Google Maps is available
+    if (typeof google === 'undefined') {
+        document.getElementById('map').innerHTML = `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: linear-gradient(135deg, #667eea20, #764ba220);">
+                <i class="fas fa-map-marked-alt" style="font-size: 64px; color: #667eea; margin-bottom: 20px;"></i>
+                <h3 style="color: #333;">Map View</h3>
+                <p style="color: #666; text-align: center; max-width: 80%;">Add Google Maps API key to see interactive map</p>
+                <p style="font-size: 12px; color: #999; margin-top: 10px;">Get key from: developers.google.com/maps</p>
+            </div>
+        `;
+        return;
+    }
+    
+    map = new google.maps.Map(document.getElementById('map'), {
+        center: defaultCenter,
+        zoom: 13,
+        styles: [
+            {
+                featureType: 'poi',
+                elementType: 'labels',
+                stylers: [{ visibility: 'off' }]
+            }
+        ]
+    });
+    
+    // Add markers for all hospitals
+    hospitals.forEach(hospital => {
+        addMarker(hospital);
+    });
+}
+
+function addMarker(hospital) {
+    if (typeof google === 'undefined') return;
+    
+    const markerColor = hospital.emergency ? '#dc3545' : '#667eea';
+    
+    const marker = new google.maps.Marker({
+        position: { lat: hospital.lat, lng: hospital.lon },
+        map: map,
+        title: hospital.name,
+        icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            fillColor: markerColor,
+            fillOpacity: 0.8,
+            scale: 10,
+            strokeColor: 'white',
+            strokeWeight: 2
+        }
+    });
+    
+    const infoWindow = new google.maps.InfoWindow({
+        content: `
+            <div style="padding: 12px; max-width: 250px;">
+                <h4 style="margin: 0 0 8px; color: #667eea;">${hospital.name}</h4>
+                <p style="margin: 5px 0; font-size: 12px;"><i class="fas fa-map-marker-alt"></i> ${hospital.address}</p>
+                <p style="margin: 5px 0; font-size: 12px;"><i class="fas fa-phone"></i> ${hospital.phone}</p>
+                <p style="margin: 5px 0; font-size: 12px;"><i class="fas fa-road"></i> ${hospital.distance_text}</p>
+                <a href="https://www.google.com/maps/dir/?api=1&destination=${hospital.lat},${hospital.lon}" 
+                   target="_blank" style="color: #667eea; font-size: 12px;">Get Directions →</a>
+            </div>
+        `
+    });
+    
+    marker.addListener('click', () => {
+        infoWindow.open(map, marker);
+    });
+    
+    markers.push(marker);
+}
+
+function getUserLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            position => {
+                const userPos = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+                
+                if (typeof google !== 'undefined' && map) {
+                    if (userMarker) userMarker.setMap(null);
+                    
+                    userMarker = new google.maps.Marker({
+                        position: userPos,
+                        map: map,
+                        title: 'Your Location',
+                        icon: {
+                            path: google.maps.SymbolPath.CIRCLE,
+                            fillColor: '#28a745',
+                            fillOpacity: 1,
+                            scale: 12,
+                            strokeColor: 'white',
+                            strokeWeight: 3
+                        }
+                    });
+                    
+                    map.setCenter(userPos);
+                    map.setZoom(14);
+                }
+                
+                showToast('Location detected!', 'success');
+            },
+            error => {
+                showToast('Unable to get location. Please enable GPS.', 'error');
+            }
+        );
+    } else {
+        showToast('Geolocation not supported', 'error');
+    }
+}
+
+// Search and Filter
+document.getElementById('searchInput').addEventListener('input', filterHospitals);
+document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        filterHospitals();
+    });
+});
+
+function filterHospitals() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const activeFilter = document.querySelector('.filter-btn.active').dataset.filter;
+    
+    const items = document.querySelectorAll('.hospital-item');
+    let visibleCount = 0;
+    
+    items.forEach(item => {
+        const name = item.dataset.name;
+        const specialty = item.dataset.specialty;
+        const isEmergency = item.dataset.emergency === 'true';
+        
+        let matchesSearch = name.includes(searchTerm) || specialty.includes(searchTerm);
+        let matchesFilter = true;
+        
+        if (activeFilter === 'emergency') {
+            matchesFilter = isEmergency;
+        } else if (activeFilter === 'ophthalmology') {
+            matchesFilter = specialty.includes('ophthalmology') || specialty.includes('retina');
+        }
+        
+        if (matchesSearch && matchesFilter) {
+            item.style.display = 'block';
+            visibleCount++;
+        } else {
+            item.style.display = 'none';
+        }
+    });
+    
+    // Show no results message
+    const listContainer = document.getElementById('hospitalsList');
+    const existingMsg = document.querySelector('.no-results');
+    
+    if (visibleCount === 0 && !existingMsg) {
+        const noResults = document.createElement('div');
+        noResults.className = 'no-results';
+        noResults.innerHTML = '<i class="fas fa-search" style="font-size: 48px; opacity: 0.3;"></i><p>No hospitals found</p>';
+        listContainer.appendChild(noResults);
+    } else if (visibleCount > 0 && existingMsg) {
+        existingMsg.remove();
+    }
+}
+
+// Directions buttons
+document.querySelectorAll('.btn-directions').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const lat = this.dataset.lat;
+        const lon = this.dataset.lon;
+        window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`, '_blank');
+    });
+});
+
+// Book appointment
+document.querySelectorAll('.btn-book').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const hospitalName = this.dataset.name;
+        const hospitalPhone = this.dataset.phone;
+        showToast(`Appointment booking for ${hospitalName}`, 'info');
+        setTimeout(() => {
+            window.location.href = '/appointments';
+        }, 1000);
+    });
+});
+
+// My Location button
+document.getElementById('myLocationBtn').addEventListener('click', getUserLocation);
+
+// Toast notification function
+function showToast(message, type) {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#17a2b8'};
+        color: white;
+        padding: 12px 24px;
+        border-radius: 30px;
+        z-index: 10000;
+        animation: fadeInUp 0.3s ease;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    `;
+    toast.innerHTML = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'fadeOutDown 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// Add animation styles
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+        to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+    @keyframes fadeOutDown {
+        from { opacity: 1; transform: translateX(-50%) translateY(0); }
+        to { opacity: 0; transform: translateX(-50%) translateY(20px); }
+    }
+`;
+document.head.appendChild(style);
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof google !== 'undefined') {
+        initMap();
+    } else {
+        document.getElementById('map').innerHTML = `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: linear-gradient(135deg, #667eea20, #764ba220);">
+                <i class="fas fa-map-marked-alt" style="font-size: 64px; color: #667eea; margin-bottom: 20px;"></i>
+                <h3 style="color: #333;">Map Preview</h3>
+                <p style="color: #666; text-align: center; max-width: 80%;">Interactive map requires Google Maps API key</p>
+                <button onclick="window.open('https://www.google.com/maps/search/eye+hospitals+near+me', '_blank')" 
+                        style="margin-top: 15px; padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 25px; cursor: pointer;">
+                    Open Google Maps
+                </button>
+            </div>
+        `;
+    }
+});
+</script>
+{% endblock %}

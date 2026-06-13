@@ -1,0 +1,356 @@
+{% extends "base.html" %}
+
+{% block title %}Vision Screening Test{% endblock %}
+
+{% block content %}
+<div class="vision-container">
+    <h1 class="page-title"><i class="fas fa-eye-chart"></i> Vision Screening Test</h1>
+    
+    <div class="vision-test-wrapper">
+        <!-- Instructions -->
+        <div class="vision-instructions" id="instructions">
+            <h3>📋 Test Instructions</h3>
+            <ul>
+                <li>Sit <strong>2 meters (6 feet)</strong> away from your screen</li>
+                <li>Cover your <strong>LEFT eye</strong> first</li>
+                <li>Read the letters from <strong>top to bottom</strong></li>
+                <li>Click the letters you see on the virtual keyboard</li>
+                <li>Be honest - don't guess randomly</li>
+            </ul>
+            <button class="btn btn-primary" id="startTestBtn">Start Test →</button>
+        </div>
+        
+        <!-- Test Area (Hidden initially) -->
+        <div class="vision-test-area" id="testArea" style="display: none;">
+            <div class="eye-indicator" id="eyeIndicator">👁 Testing: LEFT EYE</div>
+            
+            <!-- Snellen Chart Display -->
+            <div class="snellen-chart" id="snellenChart">
+                <!-- Dynamic letters will appear here -->
+            </div>
+            
+            <!-- Virtual Keyboard -->
+            <div class="virtual-keyboard" id="keyboard">
+                <div class="keyboard-row">
+                    <button class="key-btn">E</button>
+                    <button class="key-btn">F</button>
+                    <button class="key-btn">P</button>
+                    <button class="key-btn">T</button>
+                    <button class="key-btn">O</button>
+                </div>
+                <div class="keyboard-row">
+                    <button class="key-btn">Z</button>
+                    <button class="key-btn">L</button>
+                    <button class="key-btn">D</button>
+                    <button class="key-btn">C</button>
+                    <button class="key-btn">B</button>
+                </div>
+                <div class="keyboard-row">
+                    <button class="key-btn">H</button>
+                    <button class="key-btn">N</button>
+                    <button class="key-btn">V</button>
+                    <button class="key-btn">U</button>
+                    <button class="key-btn">X</button>
+                </div>
+            </div>
+            
+            <div class="test-controls">
+                <button class="btn btn-success" id="submitLineBtn">✓ Submit This Line</button>
+                <button class="btn btn-secondary" id="nextEyeBtn" style="display: none;">Next Eye →</button>
+            </div>
+        </div>
+        
+        <!-- Results Area -->
+        <div class="vision-results" id="resultsArea" style="display: none;">
+            <div class="result-card">
+                <h3>📊 Your Vision Test Results</h3>
+                <div class="result-details">
+                    <p><strong>Right Eye:</strong> <span id="rightEyeScore">--</span></p>
+                    <p><strong>Left Eye:</strong> <span id="leftEyeScore">--</span></p>
+                    <p><strong>Interpretation:</strong> <span id="interpretation">--</span></p>
+                    <p><strong>Recommendation:</strong> <span id="visionRecommendation">--</span></p>
+                </div>
+                <button class="btn btn-primary" id="saveVisionBtn">Save Report</button>
+                <button class="btn btn-secondary" id="retestBtn">Take Test Again</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.vision-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.vision-test-wrapper {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.vision-instructions ul {
+    margin: 20px 0;
+    line-height: 1.8;
+}
+
+.snellen-chart {
+    text-align: center;
+    margin: 30px 0;
+    min-height: 400px;
+}
+
+.snellen-row {
+    margin: 15px 0;
+    font-family: monospace;
+    font-weight: bold;
+    letter-spacing: 5px;
+}
+
+.eye-indicator {
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+    padding: 10px;
+    background: #667eea;
+    color: white;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.virtual-keyboard {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.keyboard-row {
+    margin: 10px 0;
+}
+
+.key-btn {
+    width: 60px;
+    height: 60px;
+    margin: 5px;
+    font-size: 24px;
+    font-weight: bold;
+    border: 2px solid #667eea;
+    background: white;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.key-btn:hover {
+    background: #667eea;
+    color: white;
+    transform: scale(1.05);
+}
+
+.key-btn.selected {
+    background: #28a745;
+    color: white;
+    border-color: #28a745;
+}
+
+.test-controls {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.result-card {
+    text-align: center;
+}
+
+.result-details p {
+    margin: 15px 0;
+    font-size: 18px;
+}
+</style>
+
+<script>
+// Snellen chart data (letter rows with corresponding vision scores)
+const snellenRows = [
+    { size: 80, letters: "E", score: "6/60" },
+    { size: 60, letters: "F P", score: "6/36" },
+    { size: 45, letters: "T O Z", score: "6/24" },
+    { size: 35, letters: "L P E D", score: "6/18" },
+    { size: 25, letters: "P E C F D", score: "6/12" },
+    { size: 18, letters: "E D F C Z P", score: "6/9" },
+    { size: 12, letters: "F E L O P Z D", score: "6/6" }
+];
+
+let currentEye = 'left';  // 'left' or 'right'
+let currentRow = 0;
+let results = { left: null, right: null };
+let selectedLetters = [];
+
+function startTest() {
+    document.getElementById('instructions').style.display = 'none';
+    document.getElementById('testArea').style.display = 'block';
+    currentEye = 'left';
+    currentRow = 0;
+    selectedLetters = [];
+    document.getElementById('eyeIndicator').innerHTML = '👁 Testing: LEFT EYE';
+    document.getElementById('nextEyeBtn').style.display = 'none';
+    displayRow();
+}
+
+function displayRow() {
+    const row = snellenRows[currentRow];
+    const chartDiv = document.getElementById('snellenChart');
+    
+    chartDiv.innerHTML = `
+        <div class="snellen-row" style="font-size: ${row.size}px;">
+            ${row.letters}
+        </div>
+        <p style="color: #666; margin-top: 10px;">Row: ${row.score}</p>
+    `;
+    
+    selectedLetters = [];
+    highlightSelected();
+}
+
+function highlightSelected() {
+    // Remove all selected class
+    document.querySelectorAll('.key-btn').forEach(btn => {
+        btn.classList.remove('selected');
+    });
+    
+    // Highlight selected letters
+    selectedLetters.forEach(letter => {
+        document.querySelectorAll('.key-btn').forEach(btn => {
+            if (btn.textContent === letter) {
+                btn.classList.add('selected');
+            }
+        });
+    });
+}
+
+// Keyboard input
+document.querySelectorAll('.key-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const letter = this.textContent;
+        const currentRowLetters = snellenRows[currentRow].letters.replace(/\s/g, '');
+        
+        if (selectedLetters.includes(letter)) {
+            // Remove if already selected
+            selectedLetters = selectedLetters.filter(l => l !== letter);
+        } else {
+            // Add if not already selected and within limit
+            if (selectedLetters.length < currentRowLetters.length) {
+                selectedLetters.push(letter);
+            }
+        }
+        highlightSelected();
+    });
+});
+
+// Submit current line
+document.getElementById('submitLineBtn').addEventListener('click', function() {
+    const expectedLetters = snellenRows[currentRow].letters.replace(/\s/g, '').split('');
+    const isCorrect = expectedLetters.length === selectedLetters.length && 
+                      expectedLetters.every(l => selectedLetters.includes(l));
+    
+    if (isCorrect) {
+        // User passed this row, move to next
+        if (currentRow < snellenRows.length - 1) {
+            currentRow++;
+            displayRow();
+        } else {
+            // Completed all rows - perfect vision
+            finishEye(snellenRows[currentRow].score);
+        }
+    } else {
+        // User failed - record last passed score
+        const lastScore = currentRow > 0 ? snellenRows[currentRow - 1].score : snellenRows[0].score;
+        finishEye(lastScore);
+    }
+});
+
+function finishEye(score) {
+    results[currentEye] = score;
+    
+    if (currentEye === 'left') {
+        // Move to right eye
+        currentEye = 'right';
+        currentRow = 0;
+        selectedLetters = [];
+        document.getElementById('eyeIndicator').innerHTML = '👁 Testing: RIGHT EYE';
+        document.getElementById('nextEyeBtn').style.display = 'none';
+        displayRow();
+    } else {
+        // Both eyes done - show results
+        showResults();
+    }
+}
+
+function showResults() {
+    document.getElementById('testArea').style.display = 'none';
+    document.getElementById('resultsArea').style.display = 'block';
+    
+    const leftScore = results.left;
+    const rightScore = results.right;
+    
+    document.getElementById('rightEyeScore').textContent = rightScore;
+    document.getElementById('leftEyeScore').textContent = leftScore;
+    
+    // Calculate worst eye for interpretation
+    const scores = ['6/6', '6/9', '6/12', '6/18', '6/24', '6/36', '6/60'];
+    const leftIndex = scores.indexOf(leftScore);
+    const rightIndex = scores.indexOf(rightScore);
+    const worstIndex = Math.max(leftIndex, rightIndex);
+    const worstScore = scores[worstIndex];
+    
+    let interpretation = '';
+    let recommendation = '';
+    
+    if (worstScore === '6/6') {
+        interpretation = 'Normal Vision';
+        recommendation = 'Your vision is normal. Regular check-ups recommended every 2 years.';
+    } else if (worstScore === '6/9') {
+        interpretation = 'Mild Vision Impairment';
+        recommendation = 'Mild refractive error possible. Consider an eye exam if you experience headaches or eye strain.';
+    } else if (worstScore === '6/12') {
+        interpretation = 'Moderate Vision Impairment';
+        recommendation = 'You may need glasses. Please consult an ophthalmologist for a comprehensive eye exam.';
+    } else if (worstScore === '6/18') {
+        interpretation = 'Moderate-Severe Impairment';
+        recommendation = 'Significant vision loss detected. Please schedule an eye exam immediately.';
+    } else {
+        interpretation = 'Severe Vision Impairment';
+        recommendation = 'URGENT: Please consult an eye specialist immediately for comprehensive evaluation.';
+    }
+    
+    document.getElementById('interpretation').textContent = interpretation;
+    document.getElementById('visionRecommendation').textContent = recommendation;
+}
+
+// Save vision report
+document.getElementById('saveVisionBtn').addEventListener('click', function() {
+    fetch('/api/save-vision-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            left_eye: results.left,
+            right_eye: results.right,
+            interpretation: document.getElementById('interpretation').textContent
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Vision test results saved successfully!');
+            window.location.href = '/history';
+        }
+    });
+});
+
+document.getElementById('retestBtn').addEventListener('click', function() {
+    location.reload();
+});
+
+document.getElementById('startTestBtn').addEventListener('click', startTest);
+</script>
+{% endblock %}

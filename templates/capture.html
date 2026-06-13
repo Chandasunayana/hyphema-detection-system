@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}Capture Eye Image{% endblock %}
+
+{% block content %}
+<div class="capture-container">
+    <h1 class="page-title"><i class="fas fa-camera"></i> Capture Eye Image</h1>
+    
+    <div class="capture-grid">
+        <!-- Camera Section -->
+        <div class="camera-section">
+            <div class="camera-preview">
+                <video id="video" autoplay playsinline style="width:100%; display:none;"></video>
+                <canvas id="canvas" style="display:none;"></canvas>
+                <div id="cameraPlaceholder" style="text-align:center; padding:80px;">
+                    <i class="fas fa-camera" style="font-size:60px; color:#999;"></i>
+                    <p>Camera access required</p>
+                    <button class="btn btn-primary" id="startCamera">Start Camera</button>
+                </div>
+                <img id="previewImg" style="width:100%; display:none;">
+            </div>
+            
+            <div class="camera-controls" style="text-align:center; margin-top:15px;">
+                <button class="btn btn-primary" id="captureBtn" disabled>Capture Photo</button>
+                <button class="btn btn-secondary" id="retakeBtn" style="display:none;">Retake</button>
+                <button class="btn btn-success" id="analyzeBtn" style="display:none;">Analyze Image</button>
+            </div>
+            <div id="loading" style="display:none; text-align:center; margin-top:10px;">
+                <div class="spinner"></div>
+                <p>Processing...</p>
+            </div>
+        </div>
+        
+        <!-- Instructions -->
+        <div class="instructions-section">
+            <h3><i class="fas fa-info-circle"></i> Tips for Best Results</h3>
+            <ul>
+                <li><strong>Good Lighting</strong> - Ensure the eye is well-lit</li>
+                <li><strong>Focus</strong> - Keep camera steady</li>
+                <li><strong>Eye Position</strong> - Open eye wide, look straight</li>
+                <li><strong>Hold Steady</strong> - Rest hand to avoid blur</li>
+            </ul>
+            <div class="warning-box">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>Screening tool only. Consult an eye specialist for medical advice.</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Upload Section -->
+    <div class="upload-alternative">
+        <h3><i class="fas fa-cloud-upload-alt"></i> Or Upload an Image</h3>
+        <form action="/upload" method="POST" enctype="multipart/form-data" class="upload-form">
+            <input type="file" name="image" id="fileInput" accept="image/*" required>
+            <button type="submit" class="btn btn-primary">Upload & Analyze</button>
+        </form>
+    </div>
+</div>
+
+<style>
+.capture-container { max-width: 1200px; margin: 0 auto; }
+.page-title { text-align: center; margin-bottom: 30px; color: #333; }
+.capture-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
+.camera-section, .instructions-section, .upload-alternative { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+.camera-preview { background: #f5f5f5; border-radius: 10px; min-height: 350px; text-align: center; }
+.btn { padding: 10px 20px; border: none; border-radius: 25px; cursor: pointer; margin: 5px; }
+.btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+.btn-secondary { background: #6c757d; color: white; }
+.btn-success { background: #28a745; color: white; }
+.spinner { width: 30px; height: 30px; border: 3px solid #f3f3f3; border-top: 3px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+.warning-box { background: #fff3cd; padding: 15px; border-radius: 10px; display: flex; gap: 10px; margin-top: 20px; }
+.upload-alternative input { margin: 10px 0; padding: 10px; }
+@media (max-width: 768px) { .capture-grid { grid-template-columns: 1fr; } }
+</style>
+
+<script>
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const startBtn = document.getElementById('startCamera');
+const captureBtn = document.getElementById('captureBtn');
+const retakeBtn = document.getElementById('retakeBtn');
+const analyzeBtn = document.getElementById('analyzeBtn');
+const placeholder = document.getElementById('cameraPlaceholder');
+const previewImg = document.getElementById('previewImg');
+const loading = document.getElementById('loading');
+
+let stream = null;
+let capturedData = null;
+
+startBtn.onclick = async () => {
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+        video.style.display = 'block';
+        placeholder.style.display = 'none';
+        captureBtn.disabled = false;
+        startBtn.disabled = true;
+    } catch(err) {
+        alert('Camera error: ' + err.message);
+    }
+};
+
+captureBtn.onclick = () => {
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+
+    // Resize properly (important)
+    canvas.width = 224;
+    canvas.height = 224;
+
+    // Draw full image into fixed size
+    ctx.drawImage(video, 0, 0, 224, 224);
+    capturedData = canvas.toDataURL('image/jpeg');
+    
+    previewImg.src = capturedData;
+    previewImg.style.display = 'block';
+    video.style.display = 'none';
+    
+    captureBtn.style.display = 'none';
+    retakeBtn.style.display = 'inline-block';
+    analyzeBtn.style.display = 'inline-block';
+};
+
+retakeBtn.onclick = () => {
+    previewImg.style.display = 'none';
+    video.style.display = 'block';
+    capturedData = null;
+    captureBtn.style.display = 'inline-block';
+    retakeBtn.style.display = 'none';
+    analyzeBtn.style.display = 'none';
+};
+
+analyzeBtn.onclick = async () => {
+    if (!capturedData) return;
+    
+    loading.style.display = 'block';
+    analyzeBtn.disabled = true;
+    
+    try {
+        const res = await fetch('/capture-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: capturedData })
+        });
+        const data = await res.json();
+        if (data.success) {
+            window.location.href = data.redirect;
+        } else {
+            alert('Error: ' + data.error);
+            loading.style.display = 'none';
+            analyzeBtn.disabled = false;
+        }
+    } catch(err) {
+        alert('Error: ' + err.message);
+        loading.style.display = 'none';
+        analyzeBtn.disabled = false;
+    }
+};
+</script>
+{% endblock %}
