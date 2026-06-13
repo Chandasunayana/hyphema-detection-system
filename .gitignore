@@ -2,5 +2,16 @@ venv/
 __pycache__/
 *.pyc
 *.pyo
+
+uploads/
+captured_images/
+results/
+
 *.h5
 *.keras
+*.pb
+*.tflite
+
+.env
+
+datasets/
